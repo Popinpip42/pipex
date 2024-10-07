@@ -24,9 +24,6 @@ int main(int argc, char **argv)
    *  $> ./pipex here\_doc LIMITADOR comando comando1 archivo1
    *   comando << LIMITADOR | comando1 >> archivo
    * */
-
-  //if (argc != 4)
-  //  return (EXIT_FAILURE);
   
   // 1- ARG[0] MUST ALWAYS BE A VALID FILE ELSE return error
   // 2- ARG[1] MUST ALWAYS BE A VALID COMMAND
@@ -34,13 +31,25 @@ int main(int argc, char **argv)
   // parent process executes Right side of the pipe, recieve the input over a pipe
   //        and execute the given command,
   //        THE LAST ARGUMENT WILL ALWAYS BE THE OUTPUT_FILE PARENT PROCESS WRITES TO
-  int c_id = fork();
-  if (c_id == 0){
-    printf("IM the child process %d - P_id:  %d\n", c_id, getpid());
+  t_command **commands;
+  char  *infile;
+  char  *outfile;
 
+  if (argc < 4)
+  {
+    printf("Use infile command command outfile OR infile command command\n");
+    return (1);
   }
-  else{
-    printf("IM the parent process %d - P_id %d \n", c_id, getpid());
+  infile = argv[1];
+  outfile = argv[argc - 1];
+  parse_commands(&commands, argv, argc - 1);
+
+  for (int j = 0; commands[j]; j++)
+  {
+    printf("%s\n", commands[j]->command);
+    for (int m = 0; commands[j]->cmd_args[m]; m++)
+      printf("%d - %s\n", m, commands[j]->cmd_args[m]);
   }
+  //Execute all concurrently and use only two fds from pipes interchangeably
 
 }
