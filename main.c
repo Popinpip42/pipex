@@ -1,10 +1,30 @@
 #include "pipex.h"
 
+int get_cmds_len(t_command **commands)
+{
+  int len;
+
+  len = 0;
+  while (commands[len])
+    len++;
+  return (len);
+}
+
+void  print_cmd_arr(t_command **commands)
+{
+  for (int j = 0; commands[j]; j++)
+  {
+    printf("%s\n", commands[j]->command);
+    for (int m = 0; commands[j]->cmd_args[m]; m++)
+      printf("%d - %s\n", m, commands[j]->cmd_args[m]);
+  }
+}
+
 int main(int argc, char **argv)
 {
   /*
    *  archivo1 comando 1 | comando2 archivo 2
-   *  archivo1 comando 1 | comando2 > archivo 2
+  *  archivo1 comando 1 | comando2 > archivo 2
    *
    *  EXAMPLES :
    *  $> ./pipex infile "ls -l" "wc -l" outfile
@@ -24,13 +44,7 @@ int main(int argc, char **argv)
    *  $> ./pipex here\_doc LIMITADOR comando comando1 archivo1
    *   comando << LIMITADOR | comando1 >> archivo
    * */
-  
-  // 1- ARG[0] MUST ALWAYS BE A VALID FILE ELSE return error
-  // 2- ARG[1] MUST ALWAYS BE A VALID COMMAND
-  // child process execute Left side of the pipe and sends output ot parent process
-  // parent process executes Right side of the pipe, recieve the input over a pipe
-  //        and execute the given command,
-  //        THE LAST ARGUMENT WILL ALWAYS BE THE OUTPUT_FILE PARENT PROCESS WRITES TO
+
   t_command **commands;
   char  *infile;
   char  *outfile;
@@ -42,14 +56,19 @@ int main(int argc, char **argv)
   }
   infile = argv[1];
   outfile = argv[argc - 1];
+  commands = NULL;
   parse_commands(&commands, argv, argc - 1);
+  printf("----- Success parsing commands\n");
+  print_cmd_arr(commands);
+  int cmds_len = get_cmds_len(commands);
+  printf("----- CMDS_LEN BEFORE EXECUTING %d\n", cmds_len);
+  if (cmds_len < 2)
+    return (-1);
+  print_cmd_arr(commands);
 
-  for (int j = 0; commands[j]; j++)
-  {
-    printf("%s\n", commands[j]->command);
-    for (int m = 0; commands[j]->cmd_args[m]; m++)
-      printf("%d - %s\n", m, commands[j]->cmd_args[m]);
-  }
   //Execute all concurrently and use only two fds from pipes interchangeably
+  execute_commands(commands, infile, outfile, get_cmds_len(commands));
 
+  int cleaned_cmds = free_cmd_arr(&commands);
+  printf("----- CLEANED COMMANDS %d\n", cleaned_cmds);
 }
